@@ -7,7 +7,7 @@ import:
 options:
 
 	#do not touch this -_-
-	plugin-version: 0.0.2
+	plugin-version: 0.0.3
 	
 
 function check_yaml(dir: text, value: text, set: text, type: text = "TEXT"):
@@ -36,15 +36,21 @@ function minion_check(uuid: text, loc: location) :: boolean:
 		else:
 			return false			
 
+function spawn_minions(p: player):
+	if yaml "leaf.minions.userdata.%uuid of {_p}%" is not loaded:
+		load yaml "plugins/LeafMinions/playerdata/%uuid of {_p}%.yml" as "leaf.minions.userdata.%uuid of {_p}%"
+	loop "miner" and "collector" and "butcher":
+		yaml value "MINIONS.%loop-value-1%.LOCATION" from "leaf.minions.userdata.%uuid of {_p}%" is set:
+			load chunk chunk at yaml value "MINIONS.%loop-value-1%.LOCATION" from "leaf.minions.userdata.%uuid of {_p}%"
+			spawn_minion({_p}, yaml value "MINIONS.%loop-value-1%.LOCATION" from "leaf.minions.userdata.%uuid of {_p}%", "%loop-value-1%")	
+
 on join:
-	load yaml "plugins/LeafMinions/playerdata/%uuid of player%.yml" as "leaf.minions.userdata.%uuid of player%"
-	yaml value "MINIONS.miner.LOCATION" from "leaf.minions.userdata.%uuid of player%" is set:
-		load chunk chunk at yaml value "MINIONS.miner.LOCATION" from "leaf.minions.userdata.%uuid of player%"
-		spawn_minion(player, yaml value "MINIONS.miner.LOCATION" from "leaf.minions.userdata.%uuid of player%", "miner")	
+	spawn_minions(player)
 
 on quit:
-	yaml value "MINIONS.miner.LOCATION" from "leaf.minions.userdata.%uuid of player%" is set:
-		despawn_minion(player, "miner")
+	loop "miner" and "collector" and "butcher":
+		yaml value "MINIONS.%loop-value-1%.LOCATION" from "leaf.minions.userdata.%uuid of player%" is set:
+			despawn_minion(player, "%loop-value-1%")
 	unload yaml "leaf.minions.userdata.%uuid of player%"
 
 on load:
@@ -55,19 +61,38 @@ on load:
 	check_yaml("config", "settings.miner.price", "1000", "number")	
 	check_yaml("config", "settings.miner.name", "&b« &e{player}&e's &7Minion &b»")		
 	check_yaml("config", "settings.miner.item-name", "&a&l➜ &7MINION &8&l- &9&lMINER")	
-	check_yaml("config", "settings.miner.tool", "diamond pickaxe")		
-	loop "chestplate", "leggings" and "boots":
-		check_yaml("config", "settings.miner.%loop-value-1%", "iron %loop-value-1%")				
-	check_yaml("config", "messages.prefix", "&6&lMinions &8&l» &7")
+	check_yaml("config", "settings.miner.tool", "diamond pickaxe")
+	check_yaml("config", "settings.miner.block-hits", "2", "number")	
+	check_yaml("config", "settings.butcher.price", "1000", "number")	
+	check_yaml("config", "settings.butcher.name", "&b« &e{player}&e's &7Minion &b»")		
+	check_yaml("config", "settings.butcher.item-name", "&a&l➜ &7MINION &8&l- &9&lBUTCHER")	
+	check_yaml("config", "settings.butcher.tool", "iron sword")
+	check_yaml("config", "settings.butcher.radius", "3", "number")	
+	check_yaml("config", "settings.butcher.kill-every", "10 seconds")			
+	check_yaml("config", "settings.collector.price", "1000", "number")	
+	check_yaml("config", "settings.collector.name", "&b« &e{player}&e's &7Minion &b»")		
+	check_yaml("config", "settings.collector.item-name", "&a&l➜ &7MINION &8&l- &9&lCOLLECTOR")	
+	check_yaml("config", "settings.collector.tool", "chest")	
+	check_yaml("config", "settings.collector.radius", "3", "number")	
+	check_yaml("config", "settings.collector.collect-every", "10 seconds")		
+	loop "miner" and "collector" and "butcher":			
+		loop "chestplate", "leggings" and "boots":
+			check_yaml("config", "settings.%loop-value-1%.%loop-value-2%", "iron %loop-value-2%")				
+	check_yaml("config", "messages.prefix", "&6&lMinions &8» &7")
 	check_yaml("config", "messages.no-money", "&cYou don't have enought money.")	
 	check_yaml("config", "messages.no-permission", "&cYou don't have permission to do this.")	
 	check_yaml("config", "messages.link-chest", "&3Right Click on a chest to link it to your minion.")		
 	check_yaml("config", "messages.chest-link", "&aThis chest has been linked to your minion.")	
-	check_yaml("config", "menus.shop.gui", "&8&l» &3Minions Shop")	
-	check_yaml("config", "menus.shop.miner.name", "&7&nClick to Purchase Miner Minion, &aCost: {cost}$")						
-	check_yaml("config", "menus.miner.gui", "&8&l» &3MINION SETTINGS")		
-	check_yaml("config", "menus.miner.link-chest", "&3&l» &7&nClick To Link Chest")
-	check_yaml("config", "menus.miner.take", "&3&l» &7&nClick To Take The Minion.")				
+	check_yaml("config", "menus.panel.gui", "&8» &3MINION SETTINGS")		
+	check_yaml("config", "menus.panel.take", "&3» &7&nClick To Take The Minion.")
+	check_yaml("config", "menus.panel.link-chest", "&3» &7&nClick To Link Chest")	
+	check_yaml("config", "menus.shop.gui", "&8» &3Minions Shop")	
+	check_yaml("config", "menus.shop.miner.name", "&8» &eClick to Purchase &9Miner&e Minion, &aCost: {cost}$")
+	check_yaml("config", "menus.shop.miner.slot", "0", "number")	
+	check_yaml("config", "menus.shop.butcher.name", "&8» &eClick to Purchase &9Butcher&e Minion, &aCost: {cost}$")
+	check_yaml("config", "menus.shop.butcher.slot", "2", "number")								
+	check_yaml("config", "menus.shop.collector.name", "&5» &eClick to Purchase &9Collector&e Minion, &aCost: {cost}$")	
+	check_yaml("config", "menus.shop.collector.slot", "4", "number")								
 	save yaml "leaf.minions.config"
 	send "&8&l| &3&l-------------------------------------------- &8&l|" to console
 	send " " to console
@@ -75,9 +100,16 @@ on load:
 	send "&eMode: &aASkyBlock" to console	
 	broadcast "&aPlugin loaded!"
 	send " " to console
-	send "&8&l| &3&l-------------------------------------------- &8&l|" to console	
+	send "&8&l| &3&l-------------------------------------------- &8&l|" to console
+	wait a second
+	loop all players:
+		spawn_minions(loop-player)	
 
 on unload:
+	loop all players:
+		loop "miner" and "collector" and "butcher":
+			yaml value "MINIONS.%loop-value-2%.LOCATION" from "leaf.minions.userdata.%uuid of loop-value-1%" is set:
+				despawn_minion(loop-value-1, "%loop-value-2%", false)
 	send "&8&l| &3&l-------------------------------------------- &8&l|" to console
 	send " " to console
 	send "&aDisabling &ev.{@plugin-version}&a..." to console
@@ -85,33 +117,47 @@ on unload:
 	send " " to console
 	send "&8&l| &3&l-------------------------------------------- &8&l|" to console
 	
-	
-command minions [<text = help>] [<player>]:
+
+function minion_purchase(p: player, minion: text):
+	if {_p}'s balance >= yaml value "settings.%{_minion}%.price" from "leaf.minions.config":
+		remove yaml value "settings.%{_minion}%.price" from "leaf.minions.config" from {_p}'s balance
+		give skull of "%{_p}%" parsed as offline player named yaml value "settings.%{_minion}%.item-name" from "leaf.minions.config" to {_p}
+		close {_p}'s inventory
+	else:
+		send "%yaml value ""messages.prefix"" from ""leaf.minions.config""%%yaml value ""messages.no-money"" from ""leaf.minions.config""%" to {_p}
+
+command minions [<text = help>] [<text>] [<player>]:
 	aliases: minion
 	trigger:		
 		if arg-1 is "help":
 			send "&a&l➜ &7&n/minions shop"
 			if player have permission "minions.admin":
-				send "&a&l➜ &7&n/minion give {player_name}&r"
+				send "&a&l➜ &7&n/minion give {type} {player_name}&r"
 		if arg-1 is "store" or "shop":
 			open virtual hopper inventory with size 1 named yaml value "menus.shop.gui" from "leaf.minions.config" to player
 			wait a tick
-			set {_name} to yaml value "menus.shop.miner.name" from "leaf.minions.config"
-			replace all "{cost}" with "%yaml value ""settings.miner.price"" from ""leaf.minions.config""%" in {_name}
-			make a gui slot 2 of player with skull of "Miner" parsed as offline player named {_name} to run:
-				if player's balance >= yaml value "settings.miner.price" from "leaf.minions.config":
-					remove yaml value "settings.miner.price" from "leaf.minions.config" from player's balance
-					give skull of "%player%" parsed as offline player named yaml value "settings.miner.item-name" from "leaf.minions.config" to player
-					close player's inventory
-				else:
-					send "%yaml value ""messages.prefix"" from ""leaf.minions.config""%%yaml value ""messages.no-money"" from ""leaf.minions.config""%"
+			loop "miner" and "collector" and "butcher":
+				set {_name.%loop-value%} to yaml value "menus.shop.%loop-value%.name" from "leaf.minions.config"
+				set {_cost} to yaml value "settings.%loop-value%.price" from "leaf.minions.config"
+				replace all "{cost}" with "%{_cost}%" in {_name.%loop-value%}
+				loop-value is "miner":
+					set {_skull} to "miner"
+				loop-value is "collector":
+					set {_skull} to "MvgMichael"	
+				loop-value is "butcher":
+					set {_skull} to "Dragonmasterdx"										
+				make a gui slot yaml value "menus.shop.%loop-value%.slot" from "leaf.minions.config" of player with skull of "%{_skull}%" parsed as offline player named {_name.%loop-value%} to run function minion_purchase(player, "%loop-value%")	
 		if arg-1 is "reload" or "give":
 			if player have permission "minions.admin":
 				if arg-1 is "reload":
 					send "%yaml value ""messages.prefix"" from ""leaf.minions.config""%&cReloading Plugin..."
 					make console execute command "sk reload %script%"	
 				if arg-1 is "give":	
-					give skull of "%player%" parsed as offline player named yaml value "settings.miner.item-name" from "leaf.minions.config" to arg-2				
+					if arg-2 is "miner" or "collector" or "butcher":
+						if arg-3 is set:
+							give skull of "%player%" parsed as offline player named yaml value "settings.%arg-2%.item-name" from "leaf.minions.config" to arg-3
+					else:
+						send "%yaml value ""messages.prefix"" from ""leaf.minions.config""%&aSpecify type, miner, collector or butcher"
 			else:
 				send "%yaml value ""messages.prefix"" from ""leaf.minions.config""%%yaml value ""messages.no-permission"" from ""leaf.minions.config""%"
 		if arg-1 is "version":
@@ -126,10 +172,16 @@ on PlayerArmorStandManipulateEvent:
 		minion_menu(event.getPlayer(), {_type})
 
 on right click with player head or floor head:
-	name of event-item is yaml value "settings.miner.item-name" from "leaf.minions.config"
 	minion_check(uuid of player, location of block above target block) is true:
-		cancel event
-		spawn_minion(player, location of block above target block, "miner")
+		name of event-item is yaml value "settings.miner.item-name" from "leaf.minions.config":
+			cancel event
+			spawn_minion(player, location of block above target block, "miner")
+		name of event-item is yaml value "settings.collector.item-name" from "leaf.minions.config":	
+			cancel event
+			spawn_minion(player, location of block above target block, "collector")
+		name of event-item is yaml value "settings.butcher.item-name" from "leaf.minions.config":	
+			cancel event
+			spawn_minion(player, location of block above target block, "butcher")			
 		remove event-item from player
 					
 on right click on chest:
@@ -144,33 +196,37 @@ on damage of armor stand:
 	if metadata value "MINION_OWNER" of victim is set:	
 		cancel event
 
-function despawn_minion(p: player, type: text) :: boolean:	
+function despawn_minion(p: player, type: text, data: boolean = true) :: boolean:	
 	set {_loc} to yaml value "MINIONS.%{_type}%.LOCATION" from "leaf.minions.userdata.%uuid of {_p}%"
+	delete metadata value "MINION_CHEST" of {_p}
 	loop entities in radius 1 of {_loc}:
 		loop-entity is armor stand
 		metadata value "MINION_OWNER" of loop-entity is uuid of {_p}
 		clear loop-entity
-		delete yaml value "MINIONS.%{_type}%" from "leaf.minions.userdata.%uuid of {_p}%"
-		save yaml "leaf.minions.userdata.%uuid of {_p}%"
+		if {_data} is true:
+			delete yaml value "MINIONS.%{_type}%" from "leaf.minions.userdata.%uuid of {_p}%"
+			save yaml "leaf.minions.userdata.%uuid of {_p}%"
 		return true
 	return false
 
 function minion_menu(p: player, type: text):
-	open virtual hopper inventory with size 1 named yaml value "menus.%{_type}%.gui" from "leaf.minions.config" to {_p}
+	open virtual hopper inventory with size 1 named yaml value "menus.panel.gui" from "leaf.minions.config" to {_p}
 	wait a tick
-	make a gui slot 1 of {_p} with skull of "nobody" parsed as offline player named yaml value "menus.%{_type}%.link-chest" from "leaf.minions.config" to run:
-		set metadata value "MINION_CHEST" of {_p} to {_type}
-		send "%yaml value ""messages.prefix"" from ""leaf.minions.config""%%yaml value ""messages.link-chest"" from ""leaf.minions.config""%"
-		close {_p}'s inventory
-	make a gui slot 3 of {_p} with skull of "nobody" parsed as offline player named yaml value "menus.%{_type}%.take" from "leaf.minions.config" to run:
+	if {_type} is "miner" or "collector":
+		set {_slot} to 3
+		make a gui slot 1 of {_p} with skull of "nobody" parsed as offline player named yaml value "menus.panel.link-chest" from "leaf.minions.config" to run:
+			set metadata value "MINION_CHEST" of {_p} to {_type}
+			send "%yaml value ""messages.prefix"" from ""leaf.minions.config""%%yaml value ""messages.link-chest"" from ""leaf.minions.config""%"
+			close {_p}'s inventory
+	else:
+		set {_slot} to 2			
+	make a gui slot {_slot} of {_p} with skull of "nobody" parsed as offline player named yaml value "menus.panel.take" from "leaf.minions.config" to run:
 		if despawn_minion({_p}, {_type}) is true:
 			give skull of "%{_p}%" parsed as offline player named yaml value "settings.%{_type}%.item-name" from "leaf.minions.config" to {_p}
 		close {_p}'s inventory	
 
 function spawn_minion(p: player, loc: location, type: text):
 	set {_uuid} to uuid of {_p}
-	set yaml value "MINIONS.%{_type}%.LOCATION" from "leaf.minions.userdata.%{_uuid}%" to {_loc}
-	save yaml "leaf.minions.userdata.%{_uuid}%"
 	spawn an armor stand at {_loc}
 	set {_stand} to spawned armor stand	
 	set metadata value "MINION_OWNER" of {_stand} to {_uuid}
@@ -188,26 +244,63 @@ function spawn_minion(p: player, loc: location, type: text):
 	set {_stand}'s leggings to yaml value "settings.%{_type}%.leggings" from "leaf.minions.config" parsed as material
 	set {_stand}'s boots to yaml value "settings.%{_type}%.boots" from "leaf.minions.config" parsed as material
 	set {_stand}'s tool to yaml value "settings.%{_type}%.tool" from "leaf.minions.config" parsed as material
-	teleport {_stand} to location(x coord of {_stand}, y coord of {_stand}, z coord of {_stand}, {_stand}'s world, {_p}'s yaw)
-	set {_pos} to 10.5
-	while {_p} is online:
-		yaml value "MINIONS.%{_type}%.LOCATION" from "leaf.minions.userdata.%{_uuid}%" is set:
-			set {_angle} to new EulerAngle({_pos}, 0 and 0)
-			{_stand}.setRightArmPose({_angle})
-			add 1 to {_time}
-			add 0.1 to {_pos}
-			if {_pos} = 12.5:
-				set {_pos} to 11
-				block under block in front of {_stand} is not water or lava
-				minion_check({_uuid}, location of block under block in front of {_stand}) is true
-				if yaml value "MINIONS.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%" is set:
-					set {_block} to block under block in front of {_stand}
-					if block at yaml value "MINIONS.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%" has enough space for {_block}:
-						add {_block} to inventory of block at yaml value "MINIONS.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%"
-						set block under block in front of {_stand} to air
-		else:
-			stop			
-		wait 2 ticks
+	if yaml value "MINIONS.%{_type}%.LOCATION" from "leaf.minions.userdata.%{_uuid}%" is not set:
+		teleport {_stand} to location(x coord of {_stand}, y coord of {_stand}, z coord of {_stand}, {_stand}'s world, {_p}'s yaw)
+	set yaml value "MINIONS.%{_type}%.LOCATION" from "leaf.minions.userdata.%{_uuid}%" to location of {_stand}
+	save yaml "leaf.minions.userdata.%{_uuid}%"	
+	if {_type} is "miner":
+		set {_pos} to 10.5
+		while {_p} is online:
+			yaml value "MINIONS.%{_type}%.LOCATION" from "leaf.minions.userdata.%{_uuid}%" is set:
+				set {_angle} to new EulerAngle({_pos}, 0 and 0)
+				{_stand}.setRightArmPose({_angle})
+				add 1 to {_time}
+				add 0.1 to {_pos}
+				if {_pos} = 12.5:
+					set {_pos} to 11
+					add 1 to {_block-hits}
+				if {_block-hits} = yaml value "settings.miner.block-hits" from "leaf.minions.config":
+					block under block in front of {_stand} is not water or lava
+					minion_check({_uuid}, location of block under block in front of {_stand}) is true
+					if yaml value "MINIONS.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%" is set:
+						set {_block} to block under block in front of {_stand}
+						if block at yaml value "MINIONS.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%" has enough space for {_block}:
+							add {_block} to inventory of block at yaml value "MINIONS.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%"
+							set block under block in front of {_stand} to air
+					set {_block-hits} to 0	
+			else:
+				stop			
+			wait 2 ticks
+	if {_type} is "collector":
+		set {_time} to yaml value "settings.collector.collect-every" from "leaf.minions.config" parsed as timespan
+		while {_p} is online:
+			yaml value "MINIONS.%{_type}%.LOCATION" from "leaf.minions.userdata.%{_uuid}%" is set:
+				loop entities in radius yaml value "settings.collector.radius" from "leaf.minions.config" of {_stand}:
+					loop-entity is a dropped item
+					yaml value "MINIONS.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%" is set
+					add loop-entity.getItemStack() to inventory of block at yaml value "MINIONS.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%"
+					show 5 of cloud particles at location of loop-entity
+					clear loop-entity
+					wait a tick
+			else:
+				stop						
+			wait {_time}
+	if {_type} is "butcher":
+		set {_time} to yaml value "settings.butcher.kill-every" from "leaf.minions.config" parsed as timespan
+		while {_p} is online:
+			set {_angle} to new EulerAngle(10.5, 0 and 0)
+			{_stand}.setRightArmPose({_angle})		
+			yaml value "MINIONS.%{_type}%.LOCATION" from "leaf.minions.userdata.%{_uuid}%" is set:
+				loop entities in radius yaml value "settings.butcher.radius" from "leaf.minions.config" of {_stand}:
+					loop-entity is a monster or an animal
+					kill loop-entity
+					wait a tick
+			else:
+				stop					
+			wait a second
+			set {_angle} to new EulerAngle(12.5, 0 and 0)
+			{_stand}.setRightArmPose({_angle})					
+			wait {_time}
 
 			
 			
