@@ -23,8 +23,7 @@ function check_yaml(dir: text, value: text, set: text, type: text = "TEXT"):
 		loop {_set} split at "||":
 			add loop-value to yaml list {_value} from "leaf.minions.%{_dir}%"
 
-#SkyblockEarth SkyBlock.getInstance().getIslandManager().getIslandAtLocation(location)
-#.getOwnerUUID ?
+
 function minion_check(uuid: text, loc: location) :: boolean:
 	if ASkyBlockAPI.getInstance().getIslandOwnedBy(UUID.fromString({_uuid})).onIsland({_loc}):
 		return true
@@ -301,7 +300,7 @@ function spawn_minion(p: player, loc: location, type: text):
 			{_stand}.setRightArmPose({_angle})		
 			yaml value "MINIONS.%{_type}%.LOCATION" from "leaf.minions.userdata.%{_uuid}%" is set:
 				loop entities in radius yaml value "settings.butcher.radius" from "leaf.minions.config" of {_stand}:
-					loop yaml list "settings.butcher.mobs" from "leaf.minions.config"
+					loop yaml list "settings.butcher.mobs" from "leaf.minions.config":
 						if "%loop-value%" is "%loop-entity%":
 							kill loop-entity
 							wait a tick
