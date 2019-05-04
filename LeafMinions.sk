@@ -7,7 +7,7 @@ import:
 options:
 
 	#do not touch this -_-
-	plugin-version: 0.0.3
+	plugin-version: 0.0.4
 	
 
 function check_yaml(dir: text, value: text, set: text, type: text = "TEXT"):
@@ -23,6 +23,8 @@ function check_yaml(dir: text, value: text, set: text, type: text = "TEXT"):
 		loop {_set} split at "||":
 			add loop-value to yaml list {_value} from "leaf.minions.%{_dir}%"
 
+#SkyblockEarth SkyBlock.getInstance().getIslandManager().getIslandAtLocation(location)
+#.getOwnerUUID ?
 function minion_check(uuid: text, loc: location) :: boolean:
 	if ASkyBlockAPI.getInstance().getIslandOwnedBy(UUID.fromString({_uuid})).onIsland({_loc}):
 		return true
@@ -41,7 +43,6 @@ function spawn_minions(p: player):
 		load yaml "plugins/LeafMinions/playerdata/%uuid of {_p}%.yml" as "leaf.minions.userdata.%uuid of {_p}%"
 	loop "miner" and "collector" and "butcher":
 		yaml value "MINIONS.%loop-value-1%.LOCATION" from "leaf.minions.userdata.%uuid of {_p}%" is set:
-			load chunk chunk at yaml value "MINIONS.%loop-value-1%.LOCATION" from "leaf.minions.userdata.%uuid of {_p}%"
 			spawn_minion({_p}, yaml value "MINIONS.%loop-value-1%.LOCATION" from "leaf.minions.userdata.%uuid of {_p}%", "%loop-value-1%")	
 
 on join:
@@ -68,7 +69,8 @@ on load:
 	check_yaml("config", "settings.butcher.item-name", "&a&l➜ &7MINION &8&l- &9&lBUTCHER")	
 	check_yaml("config", "settings.butcher.tool", "iron sword")
 	check_yaml("config", "settings.butcher.radius", "3", "number")	
-	check_yaml("config", "settings.butcher.kill-every", "10 seconds")			
+	check_yaml("config", "settings.butcher.kill-every", "10 seconds")		
+	check_yaml("config", "settings.butcher.mobs", "zombie||cow||rabbit||spider||skeleton", "list")			
 	check_yaml("config", "settings.collector.price", "1000", "number")	
 	check_yaml("config", "settings.collector.name", "&b« &e{player}&e's &7Minion &b»")		
 	check_yaml("config", "settings.collector.item-name", "&a&l➜ &7MINION &8&l- &9&lCOLLECTOR")	
@@ -77,7 +79,8 @@ on load:
 	check_yaml("config", "settings.collector.collect-every", "10 seconds")		
 	loop "miner" and "collector" and "butcher":			
 		loop "chestplate", "leggings" and "boots":
-			check_yaml("config", "settings.%loop-value-1%.%loop-value-2%", "iron %loop-value-2%")				
+			check_yaml("config", "settings.%loop-value-1%.%loop-value-2%", "iron %loop-value-2%")	
+		check_yaml("config", "settings.%loop-value-1%.skull", "{player}")		
 	check_yaml("config", "messages.prefix", "&6&lMinions &8» &7")
 	check_yaml("config", "messages.no-money", "&cYou don't have enought money.")	
 	check_yaml("config", "messages.no-permission", "&cYou don't have permission to do this.")	
@@ -171,7 +174,7 @@ on PlayerArmorStandManipulateEvent:
 		set {_type} to metadata value "MINION_TYPE" of event.getRightClicked()
 		minion_menu(event.getPlayer(), {_type})
 
-on right click with player head or floor head:
+on right click with player head:
 	minion_check(uuid of player, location of block above target block) is true:
 		name of event-item is yaml value "settings.miner.item-name" from "leaf.minions.config":
 			cancel event
@@ -186,6 +189,7 @@ on right click with player head or floor head:
 					
 on right click on chest:
 	if metadata value "MINION_CHEST" of player is set:
+		minion_check(uuid of player, location of event-block) is true
 		cancel event
 		set yaml value "MINIONS.%metadata value ""MINION_CHEST"" of player%.CHEST" from "leaf.minions.userdata.%uuid of player%" to location of event-block
 		send "%yaml value ""messages.prefix"" from ""leaf.minions.config""%%yaml value ""messages.chest-link"" from ""leaf.minions.config""%"
@@ -199,6 +203,7 @@ on damage of armor stand:
 function despawn_minion(p: player, type: text, data: boolean = true) :: boolean:	
 	set {_loc} to yaml value "MINIONS.%{_type}%.LOCATION" from "leaf.minions.userdata.%uuid of {_p}%"
 	delete metadata value "MINION_CHEST" of {_p}
+	load chunk chunk at {_loc}
 	loop entities in radius 1 of {_loc}:
 		loop-entity is armor stand
 		metadata value "MINION_OWNER" of loop-entity is uuid of {_p}
@@ -227,6 +232,7 @@ function minion_menu(p: player, type: text):
 
 function spawn_minion(p: player, loc: location, type: text):
 	set {_uuid} to uuid of {_p}
+	load chunk chunk at {_loc}
 	spawn an armor stand at {_loc}
 	set {_stand} to spawned armor stand	
 	set metadata value "MINION_OWNER" of {_stand} to {_uuid}
@@ -239,7 +245,9 @@ function spawn_minion(p: player, loc: location, type: text):
 	{_stand}.setCustomName({_name})	
 	{_stand}.setBasePlate(false)
 	{_stand}.setArms(true)
-	set {_stand}'s helmet to skull of "%{_p}%" parsed as offline player	
+	set {_skull} to yaml value "settings.%{_type}%.skull" from "leaf.minions.config"
+	replace all "{player}" with "%{_p}%" in {_skull}
+	set {_stand}'s helmet to skull of "%{_skull}%" parsed as offline player
 	set {_stand}'s chestplate to yaml value "settings.%{_type}%.chestplate" from "leaf.minions.config" parsed as material
 	set {_stand}'s leggings to yaml value "settings.%{_type}%.leggings" from "leaf.minions.config" parsed as material
 	set {_stand}'s boots to yaml value "settings.%{_type}%.boots" from "leaf.minions.config" parsed as material
@@ -258,9 +266,10 @@ function spawn_minion(p: player, loc: location, type: text):
 				add 0.1 to {_pos}
 				if {_pos} = 12.5:
 					set {_pos} to 11
+					block under block in front of {_stand} is not water or lava or air
 					add 1 to {_block-hits}
 				if {_block-hits} = yaml value "settings.miner.block-hits" from "leaf.minions.config":
-					block under block in front of {_stand} is not water or lava
+					block under block in front of {_stand} is not water or lava or air
 					minion_check({_uuid}, location of block under block in front of {_stand}) is true
 					if yaml value "MINIONS.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%" is set:
 						set {_block} to block under block in front of {_stand}
@@ -292,9 +301,10 @@ function spawn_minion(p: player, loc: location, type: text):
 			{_stand}.setRightArmPose({_angle})		
 			yaml value "MINIONS.%{_type}%.LOCATION" from "leaf.minions.userdata.%{_uuid}%" is set:
 				loop entities in radius yaml value "settings.butcher.radius" from "leaf.minions.config" of {_stand}:
-					loop-entity is a monster or an animal
-					kill loop-entity
-					wait a tick
+					loop yaml list "settings.butcher.mobs" from "leaf.minions.config"
+						if "%loop-value%" is "%loop-entity%":
+							kill loop-entity
+							wait a tick
 			else:
 				stop					
 			wait a second
