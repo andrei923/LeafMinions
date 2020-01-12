@@ -80,9 +80,9 @@ on load:
 		loop "Chestplate", "Leggings" and "Boots":
 			check_yaml("config", "Settings.%loop-value-1%.%loop-value-2%", "iron %loop-value-2%")	
 		check_yaml("config", "Settings.%loop-value-1%.skull", "{player}")		
-	check_yaml("config", "Messages.prefix", "&6&lMinions &8» &7")
-	check_yaml("config", "Messages.no-money", "&cYou don't have enought money.")	
-	check_yaml("config", "Messages.no-permission", "&cYou don't have permission to do this.")	
+	check_yaml("config", "Messages.Prefix", "&6&lMinions &8» &7")
+	check_yaml("config", "Messages.No-Money", "&cYou don't have enought money.")	
+	check_yaml("config", "Messages.No-Permission", "&cYou don't have permission to do this.")	
 	check_yaml("config", "Messages.Link-Chest", "&3Right Click on a chest to link it to your minion.")		
 	check_yaml("config", "Messages.Chest-link", "&aThis chest has been linked to your minion.")	
 	check_yaml("config", "Menus.Minion Settings.Menu", "&8» &3MINION SETTINGS")		
@@ -125,7 +125,7 @@ function minion_purchase(p: player, minion: text):
 		give skull of "%{_p}%" parsed as offline player named yaml value "Settings.%{_minion}%.Item-name" from "leaf.minions.config" to {_p}
 		close {_p}'s inventory
 	else:
-		send "%yaml value ""Messages.prefix"" from ""leaf.minions.config""%%yaml value ""Messages.no-money"" from ""leaf.minions.config""%" to {_p}
+		send "%yaml value ""Messages.Prefix"" from ""leaf.minions.config""%%yaml value ""Messages.No-Money"" from ""leaf.minions.config""%" to {_p}
 
 command minions [<text = help>] [<text>] [<player>]:
 	aliases: minion
@@ -151,18 +151,18 @@ command minions [<text = help>] [<text>] [<player>]:
 		if arg-1 is "reload" or "give":
 			if player have permission "minions.admin":
 				if arg-1 is "reload":
-					send "%yaml value ""Messages.prefix"" from ""leaf.minions.config""%&cReloading Plugin..."
+					send "%yaml value ""Messages.Prefix"" from ""leaf.minions.config""%&cReloading Plugin..."
 					make console execute command "sk reload %script%"	
 				if arg-1 is "give":	
 					if arg-2 is "Miner" or "Collector" or "Butcher":
 						if arg-3 is set:
 							give skull of "%player%" parsed as offline player named yaml value "Settings.%arg-2%.Item-name" from "leaf.minions.config" to arg-3
 					else:
-						send "%yaml value ""Messages.prefix"" from ""leaf.minions.config""%&aSpecify type, Miner, Collector or Butcher"
+						send "%yaml value ""Messages.Prefix"" from ""leaf.minions.config""%&aSpecify type, Miner, Collector or Butcher"
 			else:
-				send "%yaml value ""Messages.prefix"" from ""leaf.minions.config""%%yaml value ""Messages.no-permission"" from ""leaf.minions.config""%"
+				send "%yaml value ""Messages.Prefix"" from ""leaf.minions.config""%%yaml value ""Messages.No-Permission"" from ""leaf.minions.config""%"
 		if arg-1 is "version":
-			send "%yaml value ""Messages.prefix"" from ""leaf.minions.config""%{@plugin-version}"		
+			send "%yaml value ""Messages.Prefix"" from ""leaf.minions.config""%{@plugin-version}"		
 					
 on PlayerArmorStandManipulateEvent:
 	if metadata value "MINION_OWNER" of event.getRightClicked() is set:	
@@ -189,7 +189,7 @@ on right click on chest:
 		minion_check(uuid of player, location of event-block) is true
 		cancel event
 		set yaml value "Minions.%metadata value ""MINION_CHEST"" of player%.Chest" from "leaf.minions.userdata.%uuid of player%" to location of event-block
-		send "%yaml value ""Messages.prefix"" from ""leaf.minions.config""%%yaml value ""Messages.Chest-link"" from ""leaf.minions.config""%"
+		send "%yaml value ""Messages.Prefix"" from ""leaf.minions.config""%%yaml value ""Messages.Chest-link"" from ""leaf.minions.config""%"
 		save yaml "leaf.minions.userdata.%uuid of player%"
 		delete metadata value "MINION_CHEST" of player
 
@@ -218,7 +218,7 @@ function minion_menu(p: player, type: text):
 		set {_slot} to 3
 		make a gui slot 1 of {_p} with skull of "nobody" parsed as offline player named yaml value "Menus.Minion Settings.Link-Chest" from "leaf.minions.config" to run:
 			set metadata value "MINION_CHEST" of {_p} to {_type}
-			send "%yaml value ""Messages.prefix"" from ""leaf.minions.config""%%yaml value ""Messages.Link-Chest"" from ""leaf.minions.config""%"
+			send "%yaml value ""Messages.Prefix"" from ""leaf.minions.config""%%yaml value ""Messages.Link-Chest"" from ""leaf.minions.config""%"
 			close {_p}'s inventory
 	else:
 		set {_slot} to 2			
