@@ -77,7 +77,7 @@ on load:
 	check_yaml("config", "Settings.Collector.Radius", "3", "number")	
 	check_yaml("config", "Settings.Collector.collect-every", "10 seconds")		
 	loop "Miner" and "Collector" and "Butcher":			
-		loop "chestplate", "leggings" and "boots":
+		loop "Chestplate", "Leggings" and "Boots":
 			check_yaml("config", "Settings.%loop-value-1%.%loop-value-2%", "iron %loop-value-2%")	
 		check_yaml("config", "Settings.%loop-value-1%.skull", "{player}")		
 	check_yaml("config", "Messages.prefix", "&6&lMinions &8» &7")
@@ -247,9 +247,9 @@ function spawn_minion(p: player, loc: location, type: text):
 	set {_skull} to yaml value "Settings.%{_type}%.skull" from "leaf.minions.config"
 	replace all "{player}" with "%{_p}%" in {_skull}
 	set {_stand}'s helmet to skull of "%{_skull}%" parsed as offline player
-	set {_stand}'s chestplate to yaml value "Settings.%{_type}%.chestplate" from "leaf.minions.config" parsed as material
-	set {_stand}'s leggings to yaml value "Settings.%{_type}%.leggings" from "leaf.minions.config" parsed as material
-	set {_stand}'s boots to yaml value "Settings.%{_type}%.boots" from "leaf.minions.config" parsed as material
+	set {_stand}'s Chestplate to yaml value "Settings.%{_type}%.Chestplate" from "leaf.minions.config" parsed as material
+	set {_stand}'s Leggings to yaml value "Settings.%{_type}%.Leggings" from "leaf.minions.config" parsed as material
+	set {_stand}'s Boots to yaml value "Settings.%{_type}%.Boots" from "leaf.minions.config" parsed as material
 	set {_stand}'s tool to yaml value "Settings.%{_type}%.Tool" from "leaf.minions.config" parsed as material
 	if yaml value "Minions.%{_type}%.Location" from "leaf.minions.userdata.%{_uuid}%" is not set:
 		teleport {_stand} to location(x coord of {_stand}, y coord of {_stand}, z coord of {_stand}, {_stand}'s world, {_p}'s yaw)
