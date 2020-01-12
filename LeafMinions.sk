@@ -84,7 +84,7 @@ on load:
 	check_yaml("config", "Messages.no-money", "&cYou don't have enought money.")	
 	check_yaml("config", "Messages.no-permission", "&cYou don't have permission to do this.")	
 	check_yaml("config", "Messages.Link-Chest", "&3Right Click on a chest to link it to your minion.")		
-	check_yaml("config", "Messages.chest-link", "&aThis chest has been linked to your minion.")	
+	check_yaml("config", "Messages.Chest-link", "&aThis chest has been linked to your minion.")	
 	check_yaml("config", "Menus.Minion Settings.Menu", "&8» &3MINION SETTINGS")		
 	check_yaml("config", "Menus.Minion Settings.Take", "&3» &7&nClick To Take The Minion.")
 	check_yaml("config", "Menus.Minion Settings.Link-Chest", "&3» &7&nClick To Link Chest")	
@@ -119,7 +119,6 @@ on unload:
 	send " " to console
 	send "&8&l| &3&l-------------------------------------------- &8&l|" to console
 	
-
 function minion_purchase(p: player, minion: text):
 	if {_p}'s balance >= yaml value "Settings.%{_minion}%.Price" from "leaf.minions.config":
 		remove yaml value "Settings.%{_minion}%.Price" from "leaf.minions.config" from {_p}'s balance
@@ -164,8 +163,7 @@ command minions [<text = help>] [<text>] [<player>]:
 				send "%yaml value ""Messages.prefix"" from ""leaf.minions.config""%%yaml value ""Messages.no-permission"" from ""leaf.minions.config""%"
 		if arg-1 is "version":
 			send "%yaml value ""Messages.prefix"" from ""leaf.minions.config""%{@plugin-version}"		
-			
-			
+					
 on PlayerArmorStandManipulateEvent:
 	if metadata value "MINION_OWNER" of event.getRightClicked() is set:	
 		cancel event	
@@ -190,8 +188,8 @@ on right click on chest:
 	if metadata value "MINION_CHEST" of player is set:
 		minion_check(uuid of player, location of event-block) is true
 		cancel event
-		set yaml value "Minions.%metadata value ""MINION_CHEST"" of player%.CHEST" from "leaf.minions.userdata.%uuid of player%" to location of event-block
-		send "%yaml value ""Messages.prefix"" from ""leaf.minions.config""%%yaml value ""Messages.chest-link"" from ""leaf.minions.config""%"
+		set yaml value "Minions.%metadata value ""MINION_CHEST"" of player%.Chest" from "leaf.minions.userdata.%uuid of player%" to location of event-block
+		send "%yaml value ""Messages.prefix"" from ""leaf.minions.config""%%yaml value ""Messages.Chest-link"" from ""leaf.minions.config""%"
 		save yaml "leaf.minions.userdata.%uuid of player%"
 		delete metadata value "MINION_CHEST" of player
 
@@ -270,10 +268,10 @@ function spawn_minion(p: player, loc: location, type: text):
 				if {_block-hits} = yaml value "Settings.Miner.block-hits" from "leaf.minions.config":
 					block under block in front of {_stand} is not water or lava or air
 					minion_check({_uuid}, location of block under block in front of {_stand}) is true
-					if yaml value "Minions.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%" is set:
+					if yaml value "Minions.%{_type}%.Chest" from "leaf.minions.userdata.%{_uuid}%" is set:
 						set {_block} to block under block in front of {_stand}
-						if block at yaml value "Minions.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%" has enough space for {_block}:
-							add {_block} to inventory of block at yaml value "Minions.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%"
+						if block at yaml value "Minions.%{_type}%.Chest" from "leaf.minions.userdata.%{_uuid}%" has enough space for {_block}:
+							add {_block} to inventory of block at yaml value "Minions.%{_type}%.Chest" from "leaf.minions.userdata.%{_uuid}%"
 							set block under block in front of {_stand} to air
 					set {_block-hits} to 0	
 			else:
@@ -285,8 +283,8 @@ function spawn_minion(p: player, loc: location, type: text):
 			yaml value "Minions.%{_type}%.Location" from "leaf.minions.userdata.%{_uuid}%" is set:
 				loop entities in radius yaml value "Settings.Collector.Radius" from "leaf.minions.config" of {_stand}:
 					loop-entity is a dropped item
-					yaml value "Minions.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%" is set
-					add loop-entity.getItemStack() to inventory of block at yaml value "Minions.%{_type}%.CHEST" from "leaf.minions.userdata.%{_uuid}%"
+					yaml value "Minions.%{_type}%.Chest" from "leaf.minions.userdata.%{_uuid}%" is set
+					add loop-entity.getItemStack() to inventory of block at yaml value "Minions.%{_type}%.Chest" from "leaf.minions.userdata.%{_uuid}%"
 					show 5 of cloud particles at location of loop-entity
 					clear loop-entity
 					wait a tick
